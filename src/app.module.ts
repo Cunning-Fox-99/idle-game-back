@@ -1,22 +1,26 @@
-// app.module.ts
 import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
-import { AuthMiddleware } from './middleware/auth.middleware'; // Импортируем middleware
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'db',
-      port: 5432,
-      username: 'user',
-      password: 'password',
-      database: 'idle_game',
-      autoLoadEntities: true,
-      synchronize: true,
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DATABASE_HOST'),
+        port: configService.get<number>('DATABASE_PORT'),
+        username: configService.get<string>('DATABASE_USERNAME'),
+        password: configService.get<string>('DATABASE_PASSWORD'),
+        database: configService.get<string>('DATABASE_NAME'),
+        autoLoadEntities: true,
+        synchronize: true,
+      }),
+      inject: [ConfigService],
     }),
     UserModule,
   ],
@@ -24,9 +28,5 @@ import { AuthMiddleware } from './middleware/auth.middleware'; // Импорти
   providers: [AppService],
 })
 export class AppModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AuthMiddleware)
-      .forRoutes({ path: 'user/*', method: RequestMethod.ALL });
-  }
+
 }

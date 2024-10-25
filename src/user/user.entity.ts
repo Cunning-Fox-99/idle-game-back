@@ -5,6 +5,12 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ unique: true })
+  telegramId: number;
+
+  @Column()
+  username: string;
+
   @Column({ default: 0 })
   xp: number;
 
